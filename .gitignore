@@ -8,6 +8,7 @@ dist/
 build/
 *.egg-info/
 *.spec
+*.swp
 
 # Jupyter Notebook
 .ipynb_checkpoints
