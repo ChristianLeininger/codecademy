@@ -1,0 +1,43 @@
+defaults:
+  - _self_  # Stuff from this file will be overwritten by the selected defaults.
+  - models: model_default
+  - wandb: wandb_default
+
+seed: 42
+log_level: info  # debug, info, warning, error, critical
+eta: True
+auto: True
+track: False
+pth: /home/programmer/5_master/dataScientist_ML/dataScienceFoundations/codecademy/1_Project_US_MedicalInsuranceCosts
+train_models: False
+grid_search: False
+data:
+  data_path: data/insurance.csv 
+  split_ratio: 0.8
+  strategy: median
+
+plot:
+    figsize_x: 15
+    figsize_y: 8
+    alpha: 0.8
+
+job_logging:
+    name: ${hydra:job.name}
+    root:
+      handlers: [console, file]
+
+    handlers:
+      console:
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+        formatter: basic
+      file:
+        class : logging.FileHandler
+        filename: ${hydra:job.name}_${hydra:job.num}.log  # this will name the log file with your job's name and id
+        formatter: basic
+        level: INFO
+
+    formatters:
+      basic:
+        format: '%(asctime)s [%(levelname)s] - %(name)s - %(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'
