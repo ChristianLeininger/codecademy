@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error
 from sklearn.tree import DecisionTreeRegressor
 from itertools import product
+import time
 
 from src.utils import get_logger, get_categorical_columns
 from src.utils import save_correlation_matrix, save_statistics
@@ -43,7 +44,7 @@ class Insurance:
         self.params = cfg.models["params"]
         self.check_dir()
         if self.track:
-            experiment_name = f"{cfg.wandb['experiment_name']}_date_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_seed_{cfg['seed']}"
+            experiment_name = f"{cfg.wandb['experiment_name']}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_seed_{cfg['seed']}"
             self.init_wandb(project_name=cfg.wandb['project_name'], experiment_name=experiment_name)
     
 
@@ -238,7 +239,10 @@ class Insurance:
         # table = wandb.Table(columns=["Hyperparameters", "Mean CV Score", "Test Score"])
         hyperparam_columns = list(self.cfg.models.params.keys())
         table_columns = hyperparam_columns + ["Mean CV Score", "Test Score"]
+        
         table = wandb.Table(columns=table_columns)
+        # start measturing time
+        start_time = time.time()
         for idx, combination in enumerate(product(*values)):  # Iterate over cartesian product
 
             params = dict(zip(keys, combination))
@@ -252,12 +256,16 @@ class Insurance:
             test_score = estimator.score(self.X_test, self.y_test)
             estimator.predict(self.X_test)
             params_str = ', '.join([f"{k}={v}" for k, v in params.items()])
-            self.logger.info(f" Run {idx} of {total_combinations}  params: {params_str}, mean_cv_score: {mean_cv_score:.2f}, test_score: {test_score:.2f}")
-            #table.add_data(params_str, mean_cv_score, test_score)
-            row_data = [params[key] for key in hyperparam_columns] + [mean_cv_score, test_score]
+            # self.logger.info(f" Run {idx} of {total_combinations}  params: {params_str}, mean_cv_score: {mean_cv_score:.2f}, test_score: {test_score:.2f}")
+
+            row_data = [ str(params[key]) for key in hyperparam_columns] + [mean_cv_score, test_score]
+           
+
             table.add_data(*row_data)
-            if idx > 100:
-                self.logger.info(f" Run {idx} of {total_combinations}  params: {params_str}, mean_cv_score: {mean_cv_score:.2f}, test_score: {test_score:.2f}")
+            if idx % 500 == 0:
+                elapsed_time = time.time() - start_time
+                minutes, seconds = divmod(elapsed_time, 60)
+                self.logger.info(f" Run {idx} of {total_combinations}  mean_cv_score: {mean_cv_score:.2f}, test_score: {test_score:.2f} Elapsed time: {int(minutes)} minutes and {seconds:.2f} seconds")
                 
         
     
